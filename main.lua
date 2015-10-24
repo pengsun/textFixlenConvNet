@@ -17,8 +17,10 @@ opt = opt or {
   gpuInd = 1, -- gpu #
   C = 1024,   -- #channels
   V = 30000, -- #vocabulary
+  M = 128, -- a fixed length for the string
   fnData = 'data/nonono.lua', -- filie name for data generator
   fnModel = 'net/nonono.lua', -- file name for model
+  fnTest = 'test.lua', -- file name for testing
   stOptim =  {
     learningRate = 1,
     learningRateDecay = 1e-7,
@@ -54,7 +56,7 @@ write_opt_net(opt, md)
 local epMax = opt.epMax or 3
 param, gradParam = md:getParameters()
 trainOneEpoch = dofile'train.lua'
-testOneEpoch = dofile'test.lua'
+testOneEpoch = dofile(opt.fnTest)
 for ep = 1, epMax do
   trainOneEpoch(trData, info.tr, ep)
   

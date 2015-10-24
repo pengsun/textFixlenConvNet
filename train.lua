@@ -4,8 +4,10 @@ require'xlua'
 -- check & prepare upvalues
 assert(md, 'upvalue model not set')
 local param, gradParam = md:getParameters()
+
 assert(loss, 'upvalue loss not set')
-local opt = opt or {
+
+opt = opt or {
   isCuda = true,
   batSize = 256,
   stOptim =  {
@@ -17,6 +19,7 @@ local opt = opt or {
 }
 local stOptim = opt.stOptim
 local shrinkFreq = opt.shrinkFreq
+
 
 local train = function (data, theInfo, ep)
   -- check input
@@ -32,19 +35,24 @@ local train = function (data, theInfo, ep)
   theInfo.ell[ep] = 0
   -- shrink learningRate when necessary
   if ep % shrinkFreq == 0 then 
-    print('perform learningRate shrinking...')
     stOptim.learningRate = stOptim.learningRate / 2
+    print('perform learningRate shrinking... New rate: ' ..
+      stOptim.learningRate)
   end
 
-  -- sgd over each datum
-  local time = torch.tic()---------------------------
+  -- sgd over each batch
+  local time = torch.tic()-------------------------------------
+  local timeData, timeEval = 0, 0
   local nb = math.ceil( data:size()/opt.batSize )
   for ibat = 1, nb do
     -- get instances-labels batch
+    local tmp1 = torch.tic() ---------------------------------
     local inputs, targets = data:get_batch(ibat, opt.batSize)
     if opt.isCuda then 
       inputs, targets = inputs:cuda(), targets:cuda()
+      cutorch.synchoronize()
     end
+    timeData = timeData + torch.toc(tmp1) --------------------
 
     -- closure doing all
     local feval = function (tmp)
@@ -75,16 +83,18 @@ local train = function (data, theInfo, ep)
     end
 
     -- update parameters 
+    local tmp2 = torch.tic()--------------------
     optim.sgd(feval, param, stOptim)
-
+    if opt.isGpu then cutorch.synchronize() end
+    timeEval = timeEval + torch.toc(tmp2)-------
+    
     -- print
     xlua.progress(ibat, nb)
     -- print debug info
     --print(input:size())
     --print_flow()
   end -- for ibat
-  if opt.isGpu then cutorch.synchronize() end
-  time = torch.toc(time)-----------------------------
+  time = torch.toc(time)---------------------------------------
 
   -- update error, loss
   theInfo.conf:updateValids()
@@ -94,8 +104,10 @@ local train = function (data, theInfo, ep)
   --print(info.tr.conf)
   print(string.format('ell = %f, err = %d %%',
       theInfo.ell[ep], theInfo.err[ep]*100))
-  print(string.format('time = %ds, speed = %d data/s, or %f ms/data',
+  print(string.format('time = %fs, speed = %d data/s, or %f ms/data',
       time, data:size()/time, time/data:size()*1000))
+  print(string.format('time data = %fs, time eval = %fs',
+      timeData, timeEval))
 end -- trian
 
 return train

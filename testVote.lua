@@ -13,32 +13,56 @@ local test = function (data, theInfo, ep)
   assert(theInfo, 'training info not set')
   assert(ep, 'epoch not set')
   
-  
   print('testing epoch ' .. ep)
   md:evaluate()  -- set testing (disable dropout)
+  data:range_ind() -- use natural index order
   theInfo.conf:zero() -- reset/init info
   theInfo.ell[ep] = 0
 
-  -- test each batch
+  -- test each doc
   local time = torch.tic()---------------------------------
   local nb = math.ceil( data:size()/opt.batSize )
-  for ibat = 1, nb do
+  for idoc = 1, data:size() do
     -- get instances-labels batch
-    local inputs, targets = data:get_batch(ibat, opt.batSize)
+    local inputs, targets = data:get_batch_doc(idoc)
     if opt.isCuda then 
       inputs, targets = inputs:cuda(), targets:cuda()
     end
-
+    
+    -- test each fixed length string and vote
+--    if inputs:size(1) == 1 then
+--      require('mobdebug').start()
+--    end
     -- fprop
     local outputs = md:forward(inputs)
     local f = loss:forward(outputs, targets)
-
-    -- update error, loss
-    theInfo.conf:batchAdd(outputs, targets)
+    -- vote
+    local pred = outputs:sum(1):squeeze()
+    --update loss 
     theInfo.ell[ep] = theInfo.ell[ep] + f*inputs:size(1)
+    
+    --[[ test one by one
+    local pred
+    for ii = 1, inputs:size(1) do
+      -- fprop
+      local output = md:forward(inputs[ii])
+      -- accumulate
+      if ii == 1 then 
+        pred = output:clone() 
+      else 
+        pred:add(output)
+      end
+      local f = loss:forward(output, targets[ii])
+      -- update loss
+      theInfo.ell[ep] = theInfo.ell[ep] + f
+    end
+    ]]--
+    
+    -- update error
+    theInfo.conf:add(pred, targets[1])
 
     -- print
-    xlua.progress(ibat, nb)
+    xlua.progress(idoc, data:size())
     -- print debug info
     --print(input:size())
     --print_flow()
