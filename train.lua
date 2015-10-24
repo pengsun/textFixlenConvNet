@@ -37,7 +37,7 @@ local train = function (data, theInfo, ep)
   end
 
   -- sgd over each datum
-  local time = sys.tic()---------------------------
+  local time = torch.tic()---------------------------
   local nb = math.ceil( data:size()/opt.batSize )
   for ibat = 1, nb do
     -- get instances-labels batch
@@ -83,7 +83,8 @@ local train = function (data, theInfo, ep)
     --print(input:size())
     --print_flow()
   end -- for ibat
-  time = sys.toc(time)-----------------------------
+  if opt.isGpu then cutorch.synchronize() end
+  time = torch.toc(time)-----------------------------
 
   -- update error, loss
   theInfo.conf:updateValids()

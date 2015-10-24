@@ -19,7 +19,7 @@ local test = function (data, theInfo, ep)
   theInfo.ell[ep] = 0
 
   -- test each datum
-  local time = sys.tic()---------------------------------
+  local time = torch.tic()---------------------------------
   local nb = math.ceil( data:size()/opt.batSize )
   for ibat = 1, nb do
     -- get instances-labels batch
@@ -41,8 +41,9 @@ local test = function (data, theInfo, ep)
     -- print debug info
     --print(input:size())
     --print_flow()
-  end -- for i
-  time = sys.toc(time)-----------------------------------
+  end -- for ibat
+  if opt.isGpu then cutorch.synchronize() end
+  time = torch.toc(time)-----------------------------------
 
   -- update error, loss
   theInfo.conf:updateValids()

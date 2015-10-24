@@ -2,7 +2,6 @@
 
 require 'optim'
 require 'xlua'
-require 'sys'
 require 'pl.path'
 require 'pl.file'
 
