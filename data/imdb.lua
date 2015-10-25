@@ -29,7 +29,7 @@ local fn_trX = 'imdb-train.txt.tok'
 local fn_trY = 'imdb-train.cat'
 local fn_teX = 'imdb-test.txt.tok'
 local fn_teY = 'imdb-test.cat'
-local small = {trN = 300, teN = 100}
+local small = {trN = 1024, teN = 500}
 
 --[[ helper functions ]]--
 local read_vocab = function (ffn)

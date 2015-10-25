@@ -50,7 +50,7 @@ local train = function (data, theInfo, ep)
     local inputs, targets = data:get_batch(ibat, opt.batSize)
     if opt.isCuda then 
       inputs, targets = inputs:cuda(), targets:cuda()
-      cutorch.synchoronize()
+      cutorch.synchronize()
     end
     timeData = timeData + torch.toc(tmp1) --------------------
 
