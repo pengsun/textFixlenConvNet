@@ -1,6 +1,6 @@
 opt = {
   nThread = 2,
-  logPath = 'log/imdb/cmd_C50_M64', -- output path for log files
+  logPath = 'log/imdb/cmx2catd_C50_M64', -- output path for log files
   dataSize = 'full',
   epMax = 500,  -- max epoches
   teFreq = 5, -- test every teFreq epoches
@@ -11,7 +11,7 @@ opt = {
   V = 30000, -- #vocabulary
   M = 64, -- a fixed length for the string
   fnData = 'data/imdb.lua', -- filie name for data generator
-  fnModel = 'net/cmd.lua', -- file name for model
+  fnModel = 'net/cmx2catd.lua', -- file name for model
   fnTest = 'testVote.lua',
   stOptim =  {
     learningRate = 0.1,
